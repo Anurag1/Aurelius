@@ -1,0 +1,5 @@
+sounddevice
+numpy
+scipy
+ollama
+# For a real-time system, you would also use torch for the models
