@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aurelius-audio-research"
-version = "0.2.0"
+version = "0.2.1"
 description = "Reproducible synthetic benchmark for profile-aware audio compensation research"
 readme = "README.md"
 requires-python = ">=3.10"

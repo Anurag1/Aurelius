@@ -1,145 +1,50 @@
 # Aurelius
 
-**A reproducible research sandbox for profile-aware audio compensation experiments.**
+**Reproducible synthetic audio-processing research benchmark.**
 
-[![Tests](https://github.com/Anurag1/Aurelius/actions/workflows/tests.yml/badge.svg)](https://github.com/Anurag1/Aurelius/actions/workflows/tests.yml)
+> Research-only software. Aurelius is not a hearing test, hearing aid, diagnostic tool, medical device, or treatment. Its profiles and probes are synthetic, not audiograms or validated hearing-loss models. It has no live microphone or headphone path.
 
-> **Research-only notice.** Aurelius is not a hearing test, hearing aid, medical device, diagnostic tool, or treatment. It must not be used to assess a person's hearing or to select audio levels for listening. The included profiles and signals are synthetic software fixtures. No human-subject, clinical, or real-world hearing-benefit claim is made.
+## v0.2.1 research update
 
-## What changed in v0.2.0
+The original single-file demo has been refactored into a deterministic, offline Python package with synthetic spectral-loss profiles, a seeded probe/noise generator, identity/fixed-EQ/oracle-Wiener baselines, SNR and SI-SDR metrics, CSV/JSON outputs, tests, and continuous integration configuration.
 
-The original single-file demo combined an uncalibrated tone-threshold interaction, a simple frequency-gain curve, and a live microphone loop. That design could not support defensible hearing or intelligibility claims. The research release retires that workflow and replaces it with an **offline, deterministic, testable benchmark**:
+An optional adapter invokes the official openMHA v4.18.1 Breithaupt2008_SCNR reference through its MHAIOFile static-file interface. The adapter contract has local stub-based tests; the real engine was not installed in the development environment, so no openMHA metric or head-to-head result is claimed.
 
-- explicit synthetic spectral-loss profiles (not audiograms);
-- an STFT-based reference processing path;
-- identity and fixed profile-EQ baselines;
-- an adaptive Wiener-style processor using an *oracle* noise-only reference;
-- deterministic synthetic trial generation;
-- SNR and SI-SDR signal-fidelity metrics;
-- CSV/JSON result artifacts, unit tests, and continuous integration;
-- a research protocol, related-work review, and manuscript draft.
+## Install and run
 
-No live microphone, headphones, Bluetooth, calibration, or Ollama dependency is required.
-
-## Research question
-
-Under a **known synthetic frequency-dependent channel**, how do a fixed profile-compensation baseline and a profile-compensation-plus-noise-mask reference algorithm compare with an identity (unprocessed) baseline on signal-fidelity metrics?
-
-This narrow question is deliberately an engineering benchmark. It is not a model of cochlear physiology, a validated hearing-loss simulator, or a test of speech understanding.
-
-## Architecture
-
-~~~text
-Synthetic probe + seeded noise
-             |
-             v
-Synthetic spectral-loss channel
-             |
-             +-------------------------------+
-             |               |               |
-             v               v               v
-          Identity       Fixed profile    Adaptive profile
-          baseline       equalization     + oracle Wiener mask
-             |               |               |
-             +---------------+---------------+
-                             |
-                             v
-                  SNR / SI-SDR evaluation
-                             |
-                             v
-                  CSV + JSON + environment
-~~~
-
-The adaptive method is explicitly labelled **oracle** because the synthetic experiment provides an independent noise-only reference. It is an upper-bound experiment, not a deployable noise estimator. The profile equalizer uses a capped gain for numerical control; that cap is not a guarantee of safe acoustic output.
-
-## Quick start
-
-Python 3.10 or newer is required.
+Python 3.10 or newer:
 
 ~~~bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 pytest
+python -m aurelius.cli benchmark --output results/synthetic-v0.2.1 --seed 20261124 --trials-per-condition 10
 ~~~
 
-Run the benchmark:
+The archived internal reference experiment contains 3 synthetic profiles × 3 nominal pre-channel SNR conditions × 10 repeats: 90 trials and 270 algorithm-level rows.
+
+## Optional openMHA run
+
+Install the upstream openMHA v4.18.1 distribution and ensure the mha executable and its plugins are available:
 
 ~~~bash
-python -m aurelius.cli benchmark \
-  --output results/synthetic-v0.2 \
-  --seed 20261124 \
-  --trials-per-condition 3
+MHA_VERSION=v4.18.1 python -m aurelius.cli benchmark --output results/openmha-smoke --seed 20261124 --trials-per-condition 1 --include-openmha
 ~~~
 
-Or after installation:
+MHA_VERSION is operator-supplied metadata, not a value automatically queried or verified. Preserve the actual release asset, checksum, platform, and executable provenance. The selected SCNR chain is a noise-reduction comparator, not a matched hearing-aid fitting algorithm.
 
-~~~bash
-aurelius benchmark --output results/synthetic-v0.2
-~~~
+## Research and publication documents
 
-The benchmark writes trial_results.csv (one row per trial and algorithm) and summary.json (condition-level means, standard deviations, trial counts, software versions, seed, and scope warning).
+- docs/EXTERNAL_BASELINES.md: openMHA adapter, configuration, execution status and comparison limitations.
+- docs/DAL_REPRODUCIBILITY.md: DAL paper summary and source-access status.
+- docs/PUBLICATION_CHECKLIST.md: completed checks and remaining publication gates.
+- paper/manuscript-v0.2.1.md: software/methods manuscript draft.
 
-## Algorithms
+## Results interpretation
 
-| Name | Role | Key caveat |
-|---|---|---|
-| identity | No-processing baseline | Retains channel attenuation and added noise |
-| fixed_profile_eq | Capped inverse synthetic attenuation curve | Also boosts noise; not a clinical fitting rule |
-| adaptive_oracle_wiener | Profile compensation plus Wiener-style mask | Uses an independent noise-only reference unavailable in ordinary deployment |
+SNR and SI-SDR do not measure speech intelligibility, listening effort, perceived benefit, comfort, safety, or clinical efficacy. The oracle processor receives an independent noise-only reference unavailable to an ordinary deployed system. No clinical, human-subject, or real-world hearing-benefit claim is made.
 
-Profiles are stored as frequency/attenuation pairs and interpolated on a log-frequency axis. All numerical processing is offline and mono. The current implementation is a reference implementation, not a real-time audio engine.
+## License and citation
 
-## Interpreting results
-
-SNR and SI-SDR quantify signal fidelity relative to the known synthetic target. They do **not** measure speech intelligibility, listening effort, perceived benefit, comfort, hearing safety, or clinical efficacy. A better score on this synthetic probe does not imply a person will hear better.
-
-Do not compare Aurelius' synthetic results directly with published clinical studies or with other systems unless the stimuli, sampling, profiles, algorithms, and metric implementations are matched in a documented protocol.
-
-## Related work and positioning
-
-Aurelius is not the first project to personalize hearing-related audio processing:
-
-- **openMHA** is an established open-source master-hearing-aid research platform with calibration, multiband compression, noise reduction, beamforming, feedback cancellation, and other signal-processing components. Aurelius should treat it as an important external baseline/integration target, not claim to replace it.
-- **Differentiable Auditory Loop (DAL)** describes an open-source machine-learning framework using differentiable cochlear modelling (CARFAC), neural representations, and a neural audio processor for hyper-personalized hearing-aid research.
-- **Verhulst et al. (2026)** review personalized hearing-loss compensation and auditory-model-in-the-loop approaches. This work substantially overlaps with the high-level direction proposed for an advanced Aurelius.
-- **Apple's Hearing Aid Feature** received FDA marketing authorization in 2024 for compatible AirPods Pro software intended for adults with perceived mild-to-moderate hearing impairment. It demonstrates that personalized self-fitting and consumer hearables are already a real product category.
-
-The defensible contribution of this release is narrower: a small, inspectable, deterministic baseline harness with explicit simulation assumptions, an oracle/no-oracle distinction, tests, machine-readable outputs, and a publication protocol. **No algorithmic novelty or clinical advantage is claimed.**
-
-See docs/RELATED_WORK.md and docs/RESEARCH_PROTOCOL.md.
-
-## Publication status
-
-paper/manuscript.md is a manuscript draft for a software/methods note. It must not be submitted as completed empirical hearing research. Before submission:
-
-1. Freeze a tagged release and archive it with a DOI.
-2. Run the full benchmark in a clean environment and attach output artifacts.
-3. Independently reproduce the results.
-4. Add a fair openMHA baseline and a literature-aligned DAL comparison where code, licenses, and dependencies permit.
-5. Add recorded-speech evaluation using properly licensed datasets and established intelligibility metrics; document domain limitations.
-6. Obtain domain-expert review from an audiologist/acoustician and a signal-processing researcher.
-7. Revise the manuscript based on the actual evidence and the target venue's requirements.
-
-A public preprint or software-artifact release is possible after these checks. Acceptance by a journal or conference cannot be guaranteed.
-
-## Safety and scope
-
-- No human hearing calibration or self-test is implemented.
-- No live microphone or headphone output is implemented.
-- No individual hearing profile is stored or inferred.
-- No real audiogram is accepted as a fitting prescription.
-- Synthetic attenuation parameters are not physiological or clinical models.
-- No claim is made for diagnosis, prevention, mitigation, treatment, or cure.
-- Any future human-subject or clinical research requires qualified professional oversight, ethics review where applicable, appropriate equipment, and relevant regulatory review.
-
-See docs/SAFETY_AND_SCOPE.md.
-
-## Citation
-
-A citation file is provided in CITATION.cff. Until a version is formally archived and assigned a DOI, cite the GitHub repository and exact commit or release tag.
-
-## License
-
-MIT. Third-party datasets, models, and external software retain their own licenses and terms. See the cited projects before integrating them.
+MIT. Third-party software, models, and datasets retain their own licenses and terms. See CITATION.cff and cite the exact tag or commit used.
