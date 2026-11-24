@@ -48,7 +48,7 @@ The implementation records the root seed, deterministic trial seeds, package ver
 
 ## 4. Results
 
-A reference run was executed with root seed 20261124 and ten repeats in each profile × input-SNR cell. This yielded 90 synthetic trials and 270 algorithm-level rows. The Python, NumPy, and SciPy versions and all individual scores are preserved in artifacts/reference-run/summary.json and artifacts/reference-run/trial_results.csv.
+A reference run was executed with root seed 20261124 and ten repeats in each profile × input-SNR cell. This yielded 90 synthetic trials and 270 algorithm-level rows. The Python, NumPy, and SciPy versions and all individual scores are preserved in artifacts/reference-run/summary.json.gz and artifacts/reference-run/trial_results.csv.gz.
 
 Table 1 reports pooled descriptive SI-SDR results across the three synthetic profiles at each nominal input-SNR level. Each cell contains 30 trial scores (3 profiles × 10 repeats). The standard deviation is the sample standard deviation across those trials; it is descriptive and does not represent uncertainty over a human population.
 
