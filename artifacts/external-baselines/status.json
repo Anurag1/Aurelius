@@ -1,0 +1,22 @@
+{
+  "review_date": "2026-11-24",
+  "openmha": {
+    "release_expected": "v4.18.1",
+    "reference_algorithm": "Breithaupt2008_SCNR",
+    "adapter_implemented": true,
+    "adapter_contract_tests": "stub_only",
+    "real_engine_execution": "not_run",
+    "reason": "No mha executable is installed in the Debian 13 execution environment; outbound DNS/network access is unavailable for acquiring the official distribution.",
+    "quantitative_results_included": false
+  },
+  "dal": {
+    "paper_reviewed": true,
+    "paper_id": "arXiv:2606.04103",
+    "source_repository_url": "https://github.com/Australian-Future-Hearing-Initiative/hp-acoustic/tree/main/Frameworks/DAL_framework",
+    "source_repository_retrieval": "http_404_on_2026-11-24",
+    "code_execution": "not_run",
+    "quantitative_results_included": false,
+    "reason": "The paper's linked repository could not be retrieved from the public GitHub organization at review time."
+  },
+  "publication_claim_boundary": "No head-to-head performance advantage over openMHA or DAL is claimed."
+}

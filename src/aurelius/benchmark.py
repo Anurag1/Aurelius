@@ -14,6 +14,7 @@ import scipy
 from . import __version__
 from .dsp import adaptive_noise_aware_compensation, fixed_profile_compensation
 from .metrics import si_sdr_db, snr_db
+from .openmha import OPENMHA_REFERENCE, OPENMHA_RELEASE, run_openmha_scnr
 from .profiles import DEFAULT_PROFILES
 from .simulation import make_trial
 
@@ -21,7 +22,12 @@ from .simulation import make_trial
 ALGORITHMS = ("identity", "fixed_profile_eq", "adaptive_oracle_wiener")
 
 
-def run_benchmark(output_dir: str | Path, seed: int = 20261124, trials_per_condition: int = 3) -> dict:
+def run_benchmark(
+    output_dir: str | Path,
+    seed: int = 20261124,
+    trials_per_condition: int = 3,
+    include_openmha: bool = False,
+) -> dict:
     if trials_per_condition < 1:
         raise ValueError("trials_per_condition must be at least 1")
     out = Path(output_dir)
@@ -31,6 +37,10 @@ def run_benchmark(output_dir: str | Path, seed: int = 20261124, trials_per_condi
     snr_conditions = (0.0, 10.0, 20.0)
 
     trial_index = 0
+    openmha_runs: list[dict] = []
+    algorithm_names = list(ALGORITHMS)
+    if include_openmha:
+        algorithm_names.append("openmha_breithaupt2008_scnr")
     for profile_index, profile in enumerate(profiles):
         for snr_index, input_snr in enumerate(snr_conditions):
             for repeat in range(trials_per_condition):
@@ -50,6 +60,24 @@ def run_benchmark(output_dir: str | Path, seed: int = 20261124, trials_per_condi
                         profile,
                     ),
                 }
+                if include_openmha:
+                    run_id = f"{profile.profile_id}__snr{int(input_snr)}__rep{repeat:02d}"
+                    openmha_output, run_metadata = run_openmha_scnr(
+                        mixture,
+                        trial.sample_rate,
+                        archive_dir=out / "openmha_runs" / run_id,
+                    )
+                    openmha_runs.append(
+                        {
+                            "profile_id": profile.profile_id,
+                            "input_snr_db": input_snr,
+                            "repeat": repeat,
+                            "seed": trial_seed,
+                            "archive_dir": f"openmha_runs/{run_id}",
+                            **run_metadata,
+                        }
+                    )
+                    estimates["openmha_breithaupt2008_scnr"] = openmha_output
                 for algorithm, estimate in estimates.items():
                     output = estimate[active]
                     rows.append(
@@ -95,10 +123,29 @@ def run_benchmark(output_dir: str | Path, seed: int = 20261124, trials_per_condi
         "trials_per_condition": trials_per_condition,
         "profiles": [p.profile_id for p in profiles],
         "input_snr_conditions_db": list(snr_conditions),
-        "algorithms": list(ALGORITHMS),
+        "algorithms": algorithm_names,
         "n_trials": trial_index,
         "n_rows": len(rows),
-        "environment": {"python": platform.python_version(), "numpy": np.__version__, "scipy": scipy.__version__},
+        "environment": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "scipy": scipy.__version__,
+        },
+        "external_baselines": {
+            "openmha": {
+                "included_in_this_run": include_openmha,
+                "release_expected": OPENMHA_RELEASE,
+                "reference_algorithm": OPENMHA_REFERENCE,
+                "reference_role": "single-channel noise-reduction baseline; not a personalized fitting algorithm",
+                "run_count": len(openmha_runs),
+                "runs": openmha_runs,
+                "caveat": (
+                    "This baseline performs noise reduction only. It is not a matched reproduction of "
+                    "Aurelius profile compensation or a clinical hearing-aid fitting. All runs must "
+                    "record the actual openMHA version and compare outputs on the identical input WAV."
+                ),
+            }
+        },
         "scope_warning": (
             "Synthetic signal-fidelity benchmark only. The probe is not recorded speech; "
             "metrics do not establish intelligibility, hearing benefit, safety, or clinical efficacy. "

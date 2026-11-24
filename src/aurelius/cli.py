@@ -18,14 +18,26 @@ def build_parser() -> argparse.ArgumentParser:
     bench.add_argument("--output", default="results/synthetic-v0.2", help="output directory")
     bench.add_argument("--seed", type=int, default=20261124)
     bench.add_argument("--trials-per-condition", type=int, default=3)
+    bench.add_argument(
+        "--include-openmha",
+        action="store_true",
+        help="run openMHA v4.18.1 Breithaupt-2008 SCNR for every synthetic trial (requires a real mha executable)",
+    )
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
     if args.command == "benchmark":
-        summary = run_benchmark(args.output, seed=args.seed, trials_per_condition=args.trials_per_condition)
+        summary = run_benchmark(
+            args.output,
+            seed=args.seed,
+            trials_per_condition=args.trials_per_condition,
+            include_openmha=args.include_openmha,
+        )
         print(json.dumps({k: summary[k] for k in ("benchmark", "n_trials", "n_rows", "scope_warning")}, indent=2))
+        if args.include_openmha:
+            print("openMHA Breithaupt2008_SCNR baseline: included")
         print(f"Results written to: {args.output}")
 
 

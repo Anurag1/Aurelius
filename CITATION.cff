@@ -1,9 +1,9 @@
 cff-version: 1.2.0
-message: "If you use this software, cite the repository and the exact release or commit you used."
+message: "If you use this software, cite the repository and exact release or commit you used."
 title: "Aurelius: Reproducible Synthetic Audio Compensation Benchmark"
 authors:
   - family-names: "Anurag1"
-version: 0.2.0
+version: 0.2.1
 date-released: 2026-11-24
 repository-code: "https://github.com/Anurag1/Aurelius"
 license: MIT
