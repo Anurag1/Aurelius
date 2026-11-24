@@ -1,5 +1,3 @@
-sounddevice
-numpy
-scipy
-ollama
-# For a real-time system, you would also use torch for the models
+numpy>=1.24
+scipy>=1.10
+pytest>=7.4
